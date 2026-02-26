@@ -1,0 +1,11 @@
+id: plate_ocr
+name: 车牌识别—毕设版
+version: 1.0.0
+author: viper
+icon: app.png
+desc: >-
+  基于MaixCAM+PP-OCR的车牌识别系统。通过STM32串口指令触发识别，仅在事件窗口内运行 OCR 以降低算力占用。识别成功后通过UART
+  按自定义协议回传车牌号与置信度。支持中文车牌过滤、去抖动与重复抑制机制，适用于出入口道闸等场景。采用事件触发模式运行PP-OCR，仅在STM32发送REQ_OCR指令后开启识别窗口。内置车牌正则过滤、UTF-8
+  编码传输、CRC8 校验与重复抑制机制。适用于嵌入式出入口车牌识别系统。
+files:
+  - ocr_uart_plate.py
