@@ -15,6 +15,8 @@ Page({
   loadRecords() {
     if (this.data.loading) return
     this.setData({ loading: true })
+
+    // 拉取当前用户车牌对应的历史停车记录，并补充前端展示字段。
     auth.callFunction('getMyRecords')
       .then((result) => {
         if (!result.ok) {

@@ -10,6 +10,7 @@ function normalizePlate(plateNo) {
 }
 
 function normalizeEvent(event) {
+  // 云函数既兼容直接传对象，也兼容 HTTP 网关把 body 包在 event.body 里。
   if (event.body) {
     if (typeof event.body === 'string') {
       return JSON.parse(event.body)
@@ -20,6 +21,7 @@ function normalizeEvent(event) {
 }
 
 async function upsertDeviceStatus(data) {
+  // 设备状态表始终只保留每个 device_id 最新的一条状态。
   const existing = await db.collection('device_status').where({ device_id: data.device_id }).limit(1).get()
   const payload = {
     device_id: data.device_id,
@@ -37,6 +39,7 @@ async function upsertDeviceStatus(data) {
 }
 
 async function handleInEvent(data, user) {
+  // 进场事件直接新增一条“进行中”的停车记录。
   const now = Number(data.payload.in_time || Date.now())
   await db.collection('parking_records').add({
     data: {
@@ -67,6 +70,7 @@ async function handleOutEvent(data, user) {
       ? Math.floor((outTime - record.in_time) / 1000)
       : 0
 
+    // 能找到对应进行中记录时，就把它补全为已完成记录。
     await db.collection('parking_records').doc(record._id).update({
       data: {
         user_id: user ? user._id : record.user_id,
@@ -79,6 +83,7 @@ async function handleOutEvent(data, user) {
     return
   }
 
+  // 如果没有找到进场记录，也补一条完成记录，避免出场数据丢失。
   await db.collection('parking_records').add({
     data: {
       plate_no: plateNo,

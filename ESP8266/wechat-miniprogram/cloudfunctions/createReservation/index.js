@@ -27,6 +27,7 @@ async function getUserFromToken(token) {
 }
 
 async function expireReservations(now) {
+  // 预约接口也会先清理过期预约，避免把已过期名额继续算进去。
   const expired = await db.collection('reservations').where({
     status: 'active',
     expire_at: _.lte(now)
@@ -70,6 +71,7 @@ exports.main = async (event) => {
     expire_at: _.gt(now)
   }).get()
 
+  // 预约容量按“设备空闲位 - 有效预约数”计算，避免超卖。
   const reservableFree = Math.max(0, deviceFree - activeReservations.data.length)
   if (reservableFree <= 0) {
     return { ok: false, message: '当前没有可预约车位' }

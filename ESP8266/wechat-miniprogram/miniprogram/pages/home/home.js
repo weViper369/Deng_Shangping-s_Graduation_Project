@@ -18,6 +18,8 @@ Page({
   loadSummary() {
     if (this.data.loading) return
     this.setData({ loading: true })
+
+    // 首页加载停车场总览、当前用户预约信息等汇总数据。
     auth.callFunction('getParkingSummary')
       .then((result) => {
         if (!result.ok) {
@@ -40,6 +42,8 @@ Page({
   reserve() {
     if (this.data.reserving) return
     this.setData({ reserving: true })
+
+    // 发起预约，请求成功后刷新首页摘要。
     auth.callFunction('createReservation')
       .then((result) => {
         if (!result.ok) {

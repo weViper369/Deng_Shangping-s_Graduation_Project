@@ -5,17 +5,26 @@
 #include <WiFiClientSecureBearSSL.h>
 
 namespace {
+// 本程序用于把 STM32 发来的停车场数据转发到云端 HTTP 接口。
+// STM32 通过串口发送按行分隔的 key=value 文本帧，并用 END 表示一帧结束。
+// ESP8266 负责解析串口帧、组装 JSON，并在 WiFi 或 HTTP 暂时异常时
+// 先把数据缓存起来，等网络恢复后再重试上传。
 
 #ifndef LED_BUILTIN
 #define LED_BUILTIN 2
 #endif
 
+// 考虑到 ESP8266 RAM 有限，这里的缓冲区和队列尺寸保持得比较小。
 constexpr size_t kLineBufferSize = 96;
 constexpr size_t kQueueSize = 8;
 constexpr size_t kPayloadSize = 320;
+
+// 大多数 ESP8266 开发板的板载 LED 都是低电平点亮。
 constexpr uint8_t kWifiLedPin = LED_BUILTIN;
 constexpr uint8_t kWifiLedOn = LOW;
 constexpr uint8_t kWifiLedOff = HIGH;
+
+// 当前方案只使用 STM32 -> ESP8266 的单向串口通信。
 constexpr uint8_t kStm32RxPin = 14;  // D5 / GPIO14
 constexpr uint8_t kStm32TxPin = 12;  // D6 / GPIO12, reserved
 constexpr uint32_t kDebugBaudRate = 115200;
@@ -23,6 +32,7 @@ constexpr uint32_t kStm32BaudRate = 9600;
 
 SoftwareSerial g_stm32Serial(kStm32RxPin, kStm32TxPin);
 
+// 保存一帧 STM32 串口数据中解析出来的字段。
 struct FrameState {
   String type;
   String eventName;
@@ -35,19 +45,29 @@ struct FrameState {
   uint32_t fee = 0;
 };
 
+// 固定长度的待上传请求项，避免频繁动态分配内存。
 struct PendingRequest {
   bool used = false;
   char payload[kPayloadSize];
 };
 
+// 串口接收到的数据先按“单行文本”方式拼接到缓冲区里。
 char g_lineBuffer[kLineBufferSize];
 size_t g_lineLen = 0;
+
+// 当前正在从 STM32 输入流中解析的那一帧数据。
 FrameState g_frame;
+
+// 上传队列的队头固定放在 g_queue[0]。
 PendingRequest g_queue[kQueueSize];
+
+// 通过 millis() 记录重试时间，避免主循环被阻塞。
 unsigned long g_lastWifiAttemptMs = 0;
 unsigned long g_lastUploadAttemptMs = 0;
 bool g_wifiWasConnected = false;
 bool g_wifiConnectAttemptActive = false;
+
+// 记录上一份状态快照，避免重复状态反复入队，占用带宽和队列空间。
 String g_lastStatusPayload;
 
 void logLine(const String &message) {
@@ -59,6 +79,7 @@ void setWifiLed(bool connected) {
 }
 
 void resetFrame() {
+  // 开始解析下一帧前，先把上一帧留下的字段清空。
   g_frame = FrameState{};
 }
 
@@ -92,6 +113,7 @@ bool queueContainsPayload(const String &payload) {
 }
 
 bool replaceQueuedStatus(const String &payload) {
+  // 队列满时优先保留事件消息，用最新状态覆盖较旧的状态快照。
   for (size_t i = 0; i < kQueueSize; ++i) {
     if (!g_queue[i].used) {
       continue;
@@ -108,6 +130,7 @@ bool replaceQueuedStatus(const String &payload) {
 }
 
 bool enqueuePayload(const String &payload, bool isEvent) {
+  // 状态帧本质上是快照，重复内容没有必要再次入队。
   if (!isEvent) {
     if (payload == g_lastStatusPayload || queueContainsPayload(payload)) {
       return false;
@@ -147,6 +170,7 @@ bool queueEmpty() {
 }
 
 String buildStatusPayload() {
+  // 按云端要求的字段格式构造“停车场状态”JSON。
   String payload = "{";
   payload += "\"device_id\":\"" + escapeJson(String(CLOUD_DEVICE_ID)) + "\",";
   payload += "\"device_key\":\"" + escapeJson(String(CLOUD_DEVICE_KEY)) + "\",";
@@ -160,6 +184,7 @@ String buildStatusPayload() {
 }
 
 String buildEventPayload() {
+  // 按云端要求的字段格式构造“车辆进出事件”JSON。
   String payload = "{";
   payload += "\"device_id\":\"" + escapeJson(String(CLOUD_DEVICE_ID)) + "\",";
   payload += "\"device_key\":\"" + escapeJson(String(CLOUD_DEVICE_KEY)) + "\",";
@@ -175,6 +200,7 @@ String buildEventPayload() {
 }
 
 void finalizeFrame() {
+  // STM32 用 END 表示一帧业务数据已经发送完成。
   String payload;
   bool isEvent = false;
   if (g_frame.type == "STATUS") {
@@ -206,6 +232,7 @@ void parseLine(const char *line) {
   String key = String(line).substring(0, sep - line);
   String value = String(sep + 1);
 
+  // 解析 STM32 发来的简易 key=value 文本协议。
   if (key == "TYPE") {
     g_frame.type = value;
   } else if (key == "TOTAL") {
@@ -228,6 +255,7 @@ void parseLine(const char *line) {
 }
 
 void handleStm32Input() {
+  // 持续读取，直到 SoftwareSerial 接收缓冲区被清空。
   while (g_stm32Serial.available() > 0) {
     const char ch = static_cast<char>(g_stm32Serial.read());
     if (ch == '\r') {
@@ -246,12 +274,14 @@ void handleStm32Input() {
     if (g_lineLen + 1 < kLineBufferSize) {
       g_lineBuffer[g_lineLen++] = ch;
     } else {
+      // 单行超长时直接丢弃，避免解析状态被破坏，等待下一行重新同步。
       g_lineLen = 0;
     }
   }
 }
 
 void ensureWifiConnected() {
+  // WiFi 连接维护采用非阻塞方式，避免影响串口收数。
   if (WiFi.status() == WL_CONNECTED) {
     if (!g_wifiWasConnected) {
       g_wifiWasConnected = true;
@@ -269,6 +299,7 @@ void ensureWifiConnected() {
     logLine("[WIFI] disconnected");
   }
 
+  // 控制重试频率，避免上传失败后过于频繁地打接口。
   const unsigned long now = millis();
   if (g_lastWifiAttemptMs != 0 && now - g_lastWifiAttemptMs < WIFI_RECONNECT_INTERVAL_MS) {
     return;
@@ -277,6 +308,7 @@ void ensureWifiConnected() {
   g_lastWifiAttemptMs = now;
   WiFi.mode(WIFI_STA);
   if (!g_wifiConnectAttemptActive) {
+    // 避免在每次 loop 中重复打印相同的连接提示。
     g_wifiConnectAttemptActive = true;
     logLine("[WIFI] connecting...");
     logLine("[WIFI] ssid=" + String(WIFI_SSID));
@@ -285,6 +317,8 @@ void ensureWifiConnected() {
 }
 
 bool uploadPayload(const char *payload) {
+  // 这里虽然走的是 HTTPS，但为了调试方便关闭了证书校验。
+  // 如果后续要正式部署，建议改成证书校验或证书指纹校验。
   std::unique_ptr<BearSSL::WiFiClientSecure> client(new BearSSL::WiFiClientSecure);
   client->setInsecure();
 
@@ -311,6 +345,7 @@ void flushQueue() {
     return;
   }
 
+  // 控制重试频率，避免上传失败后过于频繁地打接口。
   const unsigned long now = millis();
   if (now - g_lastUploadAttemptMs < UPLOAD_RETRY_INTERVAL_MS) {
     return;
@@ -345,6 +380,7 @@ void setup() {
 }
 
 void loop() {
+  // 主循环刻意保持精简：收串口、保活 WiFi、尝试上传一条队头消息。
   handleStm32Input();
   ensureWifiConnected();
   flushQueue();

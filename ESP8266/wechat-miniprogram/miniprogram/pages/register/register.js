@@ -22,6 +22,8 @@ Page({
     }
 
     this.setData({ loading: true })
+
+    // 注册时把车牌号一并绑定，后续停车记录靠它和设备事件关联。
     auth.callFunction('registerUser', { username, password, plate_no: plateNo }, false)
       .then((result) => {
         if (!result.ok) {

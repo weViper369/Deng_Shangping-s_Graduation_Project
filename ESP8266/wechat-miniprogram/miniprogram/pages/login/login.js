@@ -8,6 +8,7 @@ Page({
   },
 
   onShow() {
+    // 如果本地已经有登录态，就直接跳过登录页。
     if (auth.getToken()) {
       wx.redirectTo({ url: '/pages/home/home' })
     }

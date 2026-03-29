@@ -6,6 +6,7 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 
 function normalizePlate(plateNo) {
+  // 车牌统一转成大写并去掉首尾空格，方便后续和设备事件匹配。
   return String(plateNo || '').trim().toUpperCase()
 }
 

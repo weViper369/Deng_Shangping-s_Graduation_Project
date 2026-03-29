@@ -7,6 +7,7 @@ const db = cloud.database()
 const { TOKEN_SECRET } = require('./config')
 
 function hashPassword(password) {
+  // 注册和登录都使用同一套 SHA-256 规则，避免明文存储密码。
   return crypto.createHash('sha256').update(String(password)).digest('hex')
 }
 
@@ -15,6 +16,7 @@ function base64UrlEncode(value) {
 }
 
 function signToken(payload) {
+  // 这里实现的是一个轻量自定义 token：正文 base64url + HMAC 签名。
   const body = base64UrlEncode(JSON.stringify(payload))
   const sign = crypto.createHmac('sha256', TOKEN_SECRET).update(body).digest('hex')
   return `${body}.${sign}`
