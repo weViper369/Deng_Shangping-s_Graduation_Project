@@ -1000,6 +1000,16 @@
               <FileType>5</FileType>
               <FilePath>..\Core\Inc\bsp\btn.h</FilePath>
             </File>
+            <File>
+              <FileName>parking_cloud.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\bsp\parking_cloud.c</FilePath>
+            </File>
+            <File>
+              <FileName>parking_cloud.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Core\Inc\bsp\parking_cloud.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

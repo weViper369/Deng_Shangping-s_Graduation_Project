@@ -1,0 +1,17 @@
+{
+  "pages": [
+    "pages/login/login",
+    "pages/register/register",
+    "pages/home/home",
+    "pages/records/records"
+  ],
+  "window": {
+    "navigationBarTitleText": "停车场管理系统",
+    "navigationBarBackgroundColor": "#0f5c4d",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#eef4f0",
+    "backgroundTextStyle": "light"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

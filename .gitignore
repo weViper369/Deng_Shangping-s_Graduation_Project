@@ -1,0 +1,64 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+*.tmp
+*.temp
+*.log
+.vscode/
+.idea/
+
+# Python / Node caches
+__pycache__/
+*.pyc
+node_modules/
+
+# ESP8266 local secrets
+ESP8266/parking_cloud_client/config.h
+
+# WeChat DevTools private config
+ESP8266/wechat-miniprogram/project.private.config.json
+ESP8266/wechat-miniprogram/project.config.json.user
+
+# WeChat local runtime config (use example files for GitHub)
+ESP8266/wechat-miniprogram/project.config.json
+ESP8266/wechat-miniprogram/miniprogram/utils/config.js
+ESP8266/wechat-miniprogram/cloudfunctions/loginUser/config.js
+ESP8266/wechat-miniprogram/cloudfunctions/createReservation/config.js
+ESP8266/wechat-miniprogram/cloudfunctions/getParkingSummary/config.js
+ESP8266/wechat-miniprogram/cloudfunctions/getMyRecords/config.js
+ESP8266/wechat-miniprogram/cloudfunctions/deviceUpload/config.js
+
+# WeChat build / local cache
+ESP8266/wechat-miniprogram/dist/
+ESP8266/wechat-miniprogram/build/
+
+# Keil / MDK build outputs
+*.uvguix.*
+*.bak
+*.dep
+*.d
+*.crf
+*.o
+*.obj
+*.axf
+*.elf
+*.hex
+*.bin
+*.map
+*.lst
+*.lnp
+*.sct
+*.scr
+*.iex
+*.htm
+*.html
+*.lib
+JLinkLog.txt
+
+# STM32 MDK output folders
+STM32F103C8T6/**/Listings/
+STM32F103C8T6/**/Objects/
+STM32F103C8T6/**/DebugConfig/
+
+# Misc generated assets
+*.zip

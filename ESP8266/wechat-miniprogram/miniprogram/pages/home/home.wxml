@@ -1,0 +1,73 @@
+<view class="page">
+  <view class="ambient ambient-a"></view>
+  <view class="ambient ambient-b"></view>
+
+  <view class="content">
+    <view class="hero">
+      <view class="hero-kicker">SMART PARKING</view>
+      <view class="hero-title">停车场总览</view>
+      <view class="hero-subtitle">当前账号：{{user.username}} ｜ 绑定车牌：{{user.plate_no}}</view>
+      <view class="hero-summary">
+        <view>
+          <view class="hero-subtitle" style="margin-top: 0;">当前可预约车位</view>
+          <view class="panel-title">{{summary.reservable_free || 0}} 个</view>
+        </view>
+        <view class="hero-badge">
+          <view class="hero-badge-label">现场剩余</view>
+          <view class="hero-badge-value">{{summary.device_free || 0}}</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="panel">
+      <view class="panel-title">车位数据</view>
+      <view class="panel-subtitle">云端已同步现场状态和预约信息</view>
+      <view class="metrics-grid">
+        <view class="metric-card">
+          <view class="metric-label">总车位</view>
+          <view class="metric-value">{{summary.total_slots || 0}}</view>
+          <view class="metric-unit">停车场容量</view>
+        </view>
+        <view class="metric-card">
+          <view class="metric-label">现场剩余</view>
+          <view class="metric-value">{{summary.device_free || 0}}</view>
+          <view class="metric-unit">设备实时数据</view>
+        </view>
+        <view class="metric-card">
+          <view class="metric-label">有效预约</view>
+          <view class="metric-value">{{summary.active_reservation_count || 0}}</view>
+          <view class="metric-unit">尚未到期</view>
+        </view>
+        <view class="metric-card">
+          <view class="metric-label">可预约</view>
+          <view class="metric-value">{{summary.reservable_free || 0}}</view>
+          <view class="metric-unit">可立即申请</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="panel" wx:if="{{summary.my_active_reservation}}">
+      <view class="record-head">
+        <view class="panel-title">我的预约</view>
+        <view class="status-pill warn">预约中</view>
+      </view>
+      <view class="info-row">
+        预约车牌：<text class="info-strong">{{summary.my_active_reservation.plate_no}}</text>
+      </view>
+      <view class="info-row">
+        到期时间：<text class="info-strong">{{summary.my_active_reservation.expire_text}}</text>
+      </view>
+    </view>
+
+    <view class="panel">
+      <view class="panel-title">操作区</view>
+      <view class="panel-subtitle">数据更新时间：{{summary.updated_at_text || '暂无'}}</view>
+      <button class="primary-btn" loading="{{reserving}}" bindtap="reserve">预约车位</button>
+      <view class="inline-actions">
+        <button class="secondary-btn" bindtap="goRecords">查看记录</button>
+        <button class="ghost-btn" bindtap="loadSummary">刷新数据</button>
+      </view>
+      <button class="ghost-btn" bindtap="logout">退出登录</button>
+    </view>
+  </view>
+</view>

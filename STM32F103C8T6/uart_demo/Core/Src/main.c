@@ -35,6 +35,7 @@
 #include "ssd1306.h"
 #include "ui.h"
 #include "btn.h"
+#include "parking_cloud.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -262,6 +263,7 @@ int main(void)
   db_init();
   billing_set_cfg(&bc);
   fsm_init(&g_ms);
+  parking_cloud_init(&g_ms);
 
   HAL_TIM_Base_Start_IT(&htim2);
   HAL_TIM_Base_Start_IT(&htim4);
@@ -309,6 +311,7 @@ int main(void)
     }
 
     fsm_step();
+    parking_cloud_poll();
     ui_proc();
     
     #if debug

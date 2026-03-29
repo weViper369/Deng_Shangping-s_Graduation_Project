@@ -1,0 +1,38 @@
+<view class="page">
+  <view class="ambient ambient-a"></view>
+  <view class="ambient ambient-b"></view>
+
+  <view class="content">
+    <view class="hero">
+      <view class="hero-kicker">ACCOUNT SETUP</view>
+      <view class="hero-title">
+        创建账号
+        <text class="hero-title-accent">绑定车辆信息</text>
+      </view>
+      <view class="hero-subtitle">一个账号绑定一个车牌，用于预约车位和查看自己的进出记录。</view>
+    </view>
+
+    <view class="panel auth-panel">
+      <view class="panel-title">新用户注册</view>
+      <view class="panel-subtitle">注册成功后即可在微信端直接登录使用</view>
+
+      <view class="field">
+        <text class="field-label">用户名</text>
+        <input class="field-input" placeholder="例如 zhangsan" data-field="username" bindinput="onInput" />
+      </view>
+
+      <view class="field">
+        <text class="field-label">密码</text>
+        <input class="field-input" password="true" placeholder="请设置登录密码" data-field="password" bindinput="onInput" />
+      </view>
+
+      <view class="field">
+        <text class="field-label">车牌号</text>
+        <input class="field-input" placeholder="例如 京N8P8F8" data-field="plateNo" bindinput="onInput" />
+        <view class="field-hint">后续记录查询和预约车位都会使用这个车牌号</view>
+      </view>
+
+      <button class="primary-btn" loading="{{loading}}" bindtap="submit">完成注册</button>
+    </view>
+  </view>
+</view>

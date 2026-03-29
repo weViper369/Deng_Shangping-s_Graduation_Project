@@ -1,9 +1,0 @@
-uart_demo\fsm.o: ..\Core\Src\bsp\fsm.c
-uart_demo\fsm.o: ../Core/Inc/bsp/fsm.h
-uart_demo\fsm.o: D:\keil5\ARM\ARMCC\Bin\..\include\stdint.h
-uart_demo\fsm.o: ../Core/Inc/bsp/gate.h
-uart_demo\fsm.o: ../Core/Inc/bsp/parking_db.h
-uart_demo\fsm.o: ../Core/Inc/bsp/ui.h
-uart_demo\fsm.o: D:\keil5\ARM\ARMCC\Bin\..\include\stdio.h
-uart_demo\fsm.o: D:\keil5\ARM\ARMCC\Bin\..\include\string.h
-uart_demo\fsm.o: ../Core/Inc/bsp/btn.h

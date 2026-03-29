@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "btn.h"
+#include "parking_cloud.h"
 
 static volatile uint32_t *g_ms = 0;
 
@@ -21,6 +22,7 @@ static uint8_t  pending_pay = 0;
 static uint32_t pending_out_ms = 0;
 static uint32_t pending_fee_cents = 0;
 static uint32_t pending_dur_s = 0;
+static uint32_t pending_in_ms = 0;
 static char     pending_plate[32];
 
 static uint8_t ir_out_blocked = 0;
@@ -96,6 +98,7 @@ void fsm_step(void)
                             printf("[FSM] open gate for %s (%u)\r\n", last_plate, last_conf);
                             gate_lane = LANE_IN;
                             ui_on_in_plate(last_plate,now);
+                            parking_cloud_publish_enter(last_plate, now);
                             gate_open();
                             goto_state(S_GATE_OPENING);
                             break;
@@ -111,7 +114,6 @@ void fsm_step(void)
                         default:
                             printf("[FSM] enter REJECT: unknown err=%d\r\n", (int)r);
                             break;
-        
                     }
                 }
                 else
@@ -120,10 +122,13 @@ void fsm_step(void)
                     db_ret_t rr = db_preview_exit(last_plate, now, &dur_s, &fee);
                     if (rr == DB_OK)
                     {
+                        int active_idx = db_find_active(last_plate);
+                        const db_record_t *active_record = db_get(active_idx);
                         pending_pay = 1;
                         pending_out_ms = now; // 记住出场时间戳
                         pending_dur_s = dur_s;
                         pending_fee_cents = fee;
+                        pending_in_ms = active_record ? active_record->in_ms : 0;
                         strncpy(pending_plate, last_plate, sizeof(pending_plate)-1);
                         pending_plate[sizeof(pending_plate)-1] = '\0';
 
@@ -249,6 +254,7 @@ void fsm_step(void)
                 pending_pay = 0;
                 gate_lane = LANE_OUT;
                 ui_on_pay_ok(pending_plate, pending_fee_cents, now);
+                parking_cloud_publish_exit(pending_plate, pending_in_ms, pending_out_ms, pending_fee_cents);
                 gate_open();
                 goto_state(S_GATE_OPENING);
             }
