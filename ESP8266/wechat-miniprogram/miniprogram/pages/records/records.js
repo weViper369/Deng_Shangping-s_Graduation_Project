@@ -1,4 +1,4 @@
-const auth = require('../../utils/auth')
+﻿const auth = require('../../utils/auth')
 const { formatDateTime, formatFee } = require('../../utils/format')
 
 Page({
@@ -16,7 +16,6 @@ Page({
     if (this.data.loading) return
     this.setData({ loading: true })
 
-    // 拉取当前用户车牌对应的历史停车记录，并补充前端展示字段。
     auth.callFunction('getMyRecords')
       .then((result) => {
         if (!result.ok) {
@@ -25,8 +24,8 @@ Page({
 
         const records = (result.data || []).map((item) => ({
           ...item,
-          in_text: formatDateTime(item.in_time),
-          out_text: formatDateTime(item.out_time),
+          in_text: formatDateTime(item.in_wall_time || item.in_time),
+          out_text: formatDateTime(item.out_wall_time || item.out_time),
           fee_text: formatFee(item.fee_cents)
         }))
         this.setData({ records })

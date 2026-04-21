@@ -175,6 +175,38 @@ page {
   margin-top: 0;
 }
 
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18rpx;
+  margin-top: 22rpx;
+}
+
+.action-grid .primary-btn,
+.action-grid .secondary-btn,
+.action-grid .ghost-btn {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  height: 88rpx;
+  line-height: 88rpx;
+  padding: 0 16rpx;
+  box-sizing: border-box;
+  margin-top: 0;
+  overflow: hidden;
+  font-size: 28rpx;
+}
+
+.action-grid .primary-btn::after,
+.action-grid .secondary-btn::after,
+.action-grid .ghost-btn::after {
+  border: none;
+}
+
+.action-grid .ghost-btn {
+  background: rgba(255, 255, 255, 0.92);
+}
+
 .metrics-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

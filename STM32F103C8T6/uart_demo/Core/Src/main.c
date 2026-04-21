@@ -84,6 +84,7 @@ ocr_ctrl_t g_ocr = {
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
 uint8_t uart1_rx_byte;
+uint8_t uart3_rx_byte;
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -250,6 +251,7 @@ int main(void)
 
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
   HAL_UART_Receive_IT(&huart1, &uart1_rx_byte, 1);
+  HAL_UART_Receive_IT(&huart3, &uart3_rx_byte, 1);
 
   ui_init();
   ssd1306_fill(0);
@@ -368,6 +370,11 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
     {
       maix_link_on_rx_byte(uart1_rx_byte);
       HAL_UART_Receive_IT(&huart1, &uart1_rx_byte, 1);
+    }
+    else if (huart->Instance == USART3)
+    {
+      parking_cloud_on_rx_byte(uart3_rx_byte);
+      HAL_UART_Receive_IT(&huart3, &uart3_rx_byte, 1);
     }
 }
 // 定时器回调

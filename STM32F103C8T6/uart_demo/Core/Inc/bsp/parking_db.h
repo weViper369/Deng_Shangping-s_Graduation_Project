@@ -13,49 +13,44 @@ extern "C" {
 typedef enum {
     DB_OK = 0,
     DB_ERR_PARK_FUL = -1,
-    DB_ERR_DUP  = -2,   // 重复入场
+    DB_ERR_DUP = -2,
     DB_ERR_NOT_FOUND = -3,
-    DB_ERR_FULL = -4, // 
+    DB_ERR_FULL = -4,
 } db_ret_t;
 
+typedef enum {
+    DB_SLOT_NORMAL = 0,
+    DB_SLOT_RESERVED = 1,
+} db_slot_type_t;
+
 typedef struct {
-    uint8_t  in_use;                // 1=有效
-    uint8_t  active;                // 1=在场
-    char     plate[DB_PLATE_MAX];   // UTF-8
+    uint8_t in_use;
+    uint8_t active;
+    uint8_t slot_type;
+    char plate[DB_PLATE_MAX];
     uint32_t in_ms;
     uint32_t out_ms;
     uint32_t fee_cents;
 } db_record_t;
 
-typedef struct{
-    uint8_t capacity; // 车位数量
-}db_parking_t;
+typedef struct {
+    uint8_t normal_capacity;
+    uint8_t reserved_capacity;
+} db_parking_t;
 
 void db_init(void);
-
-// 入场：创建在场记录
-db_ret_t db_enter(const char *plate, uint32_t in_ms);
-
-// 查询在场记录，返回 index（>=0）或 <0
+db_ret_t db_enter(const char *plate, uint32_t in_ms, db_slot_type_t slot_type);
 int db_find_active(const char *plate);
-
-// 仅预览：不改变记录
-db_ret_t db_preview_exit(const char *plate,uint32_t out_ms,uint32_t *duration_s,uint32_t *fee_cents);
-
-// 真正提交：改变记录（active=0, out_ms, fee）
-db_ret_t db_commit_exit(const char *plate, uint32_t out_ms, uint32_t *duration_s,uint32_t *fee_cents);
-
-// 在场车辆数
+db_ret_t db_preview_exit(const char *plate, uint32_t out_ms, uint32_t *duration_s, uint32_t *fee_cents);
+db_ret_t db_commit_exit(const char *plate, uint32_t out_ms, uint32_t *duration_s, uint32_t *fee_cents);
 int db_count_active(void);
-// 总车位数
+int db_count_active_by_type(db_slot_type_t slot_type);
 int db_capacity(void);
-
-// 可选：取记录（用于调试/显示）
-const db_record_t* db_get(int idx);
+int db_capacity_by_type(db_slot_type_t slot_type);
+const db_record_t *db_get(int idx);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif 
-
+#endif

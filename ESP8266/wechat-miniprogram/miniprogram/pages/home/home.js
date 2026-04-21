@@ -1,4 +1,4 @@
-const auth = require('../../utils/auth')
+﻿const auth = require('../../utils/auth')
 const { formatDateTime } = require('../../utils/format')
 
 Page({
@@ -6,7 +6,8 @@ Page({
     summary: {},
     user: null,
     loading: false,
-    reserving: false
+    reserving: false,
+    cancelling: false
   },
 
   onShow() {
@@ -19,7 +20,6 @@ Page({
     if (this.data.loading) return
     this.setData({ loading: true })
 
-    // 首页加载停车场总览、当前用户预约信息等汇总数据。
     auth.callFunction('getParkingSummary')
       .then((result) => {
         if (!result.ok) {
@@ -43,7 +43,6 @@ Page({
     if (this.data.reserving) return
     this.setData({ reserving: true })
 
-    // 发起预约，请求成功后刷新首页摘要。
     auth.callFunction('createReservation')
       .then((result) => {
         if (!result.ok) {
@@ -57,6 +56,26 @@ Page({
       })
       .finally(() => {
         this.setData({ reserving: false })
+      })
+  },
+
+  cancelReservation() {
+    if (this.data.cancelling) return
+    this.setData({ cancelling: true })
+
+    auth.callFunction('cancelReservation')
+      .then((result) => {
+        if (!result.ok) {
+          throw new Error(result.message || '取消失败')
+        }
+        wx.showToast({ title: '已取消', icon: 'success' })
+        this.loadSummary()
+      })
+      .catch((error) => {
+        wx.showToast({ title: error.message || '取消失败', icon: 'none' })
+      })
+      .finally(() => {
+        this.setData({ cancelling: false })
       })
   },
 

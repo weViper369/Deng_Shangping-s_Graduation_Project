@@ -98,8 +98,8 @@ static void draw_home(uint32_t now_ms)
     char l1[32], l2[32], l3[32];
     static const uint16_t CN_ZAICHANGCHELIANG[] = {0x5728, 0x573A, 0x8F66, 0x8F86}; // 在 场 车 辆
     static const uint16_t CN_SHENGYUCHEWEI[] = {0x5269, 0x4F59, 0x8F66, 0x4F4D};// 剩 余 车 位
-    int active = db_count_active();
-    int cap = db_capacity();
+    int active = db_count_active_by_type(DB_SLOT_NORMAL);
+    int cap = db_capacity_by_type(DB_SLOT_NORMAL);
     int left = cap - active;
     if (left < 0) left = 0;
 
@@ -248,6 +248,8 @@ static void draw_err(void)
         oled_draw_cn16(0, 16, CN_FULL, 4);
     else if (!strcmp(err_msg, "NOTFOUND"))   
         oled_draw_cn16(0, 16, CN_NOTFOUND, 5);
+    else
+        ssd1306_draw_str(0, 16, err_msg);
     // else if (!strcmp(err_msg, "OCR TIMEOUT"))
         // oled_draw_cn16(0, 16, CN_OCR_TO, 4);
     // else                                     

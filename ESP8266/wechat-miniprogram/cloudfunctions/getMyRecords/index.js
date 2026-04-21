@@ -1,4 +1,4 @@
-const cloud = require('wx-server-sdk')
+﻿const cloud = require('wx-server-sdk')
 const crypto = require('crypto')
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
@@ -30,10 +30,9 @@ exports.main = async (event) => {
     return { ok: false, message: '未登录或登录已失效' }
   }
 
-  // 停车记录通过用户绑定的车牌号来查询，而不是直接按 user_id 查。
   const records = await db.collection('parking_records')
     .where({ plate_no: user.plate_no })
-    .orderBy('in_time', 'desc')
+    .orderBy('in_wall_time', 'desc')
     .get()
 
   return {

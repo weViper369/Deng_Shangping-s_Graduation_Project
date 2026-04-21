@@ -1,4 +1,4 @@
-const cloud = require('wx-server-sdk')
+﻿const cloud = require('wx-server-sdk')
 const crypto = require('crypto')
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
@@ -7,8 +7,10 @@ const db = cloud.database()
 const _ = db.command
 const { TOKEN_SECRET } = require('./config')
 
+const DEFAULT_NORMAL_TOTAL_SLOTS = 20
+const DEFAULT_RESERVED_TOTAL_SLOTS = 5
+
 function decodeToken(token) {
-  // 校验 token 签名和过期时间，解析出用户身份。
   const parts = String(token || '').split('.')
   if (parts.length !== 2) return null
   const [body, sign] = parts
@@ -27,7 +29,6 @@ async function getUserFromToken(token) {
 }
 
 async function expireReservations(now) {
-  // 每次查询首页时顺手清理已经超时的预约，减少脏数据。
   const expired = await db.collection('reservations').where({
     status: 'active',
     expire_at: _.lte(now)
@@ -52,7 +53,6 @@ exports.main = async (event) => {
   const now = Date.now()
   await expireReservations(now)
 
-  // 设备状态表只取最新一条，表示当前停车场实时容量。
   const statusResult = await db.collection('device_status').orderBy('updated_at', 'desc').limit(1).get()
   const latestStatus = statusResult.data[0] || {}
 
@@ -67,25 +67,32 @@ exports.main = async (event) => {
     expire_at: _.gt(now)
   }).limit(1).get()
 
-  const totalSlots = Number(latestStatus.total_slots || 0)
-  const deviceFree = Number(latestStatus.free_slots || 0)
-  const activeReservationCount = activeReservations.data.length
-
-  // 可预约车位数 = 设备上报空闲位 - 当前仍有效的预约数量。
-  const reservableFree = Math.max(0, deviceFree - activeReservationCount)
+  const normalTotalSlots = Number(latestStatus.normal_total_slots || latestStatus.total_slots || DEFAULT_NORMAL_TOTAL_SLOTS)
+  const normalFreeSlots = Number(latestStatus.normal_free_slots || latestStatus.free_slots || 0)
+  const reservedTotalSlots = Number(latestStatus.reserved_total_slots || DEFAULT_RESERVED_TOTAL_SLOTS)
+  const reservedActiveCount = Number(latestStatus.reserved_active_count || 0)
+  const reservedPendingCount = activeReservations.data.length
+  const reservableSlots = Math.max(0, reservedTotalSlots - reservedActiveCount - reservedPendingCount)
 
   return {
     ok: true,
     data: {
-      total_slots: totalSlots,
-      device_free: deviceFree,
-      active_reservation_count: activeReservationCount,
-      reservable_free: reservableFree,
+      total_slots: normalTotalSlots + reservedTotalSlots,
+      active_reservation_count: reservedPendingCount,
+      reservable_free: reservableSlots,
+      reservable_slots: reservableSlots,
+      normal_total_slots: normalTotalSlots,
+      normal_free_slots: normalFreeSlots,
+      reserved_total_slots: reservedTotalSlots,
+      reserved_pending_count: reservedPendingCount,
+      reserved_active_count: reservedActiveCount,
       updated_at: latestStatus.updated_at || 0,
       updated_at_text: latestStatus.updated_at
-        ? new Date(latestStatus.updated_at).toLocaleString('zh-CN', { hour12: false })
+        ? new Date(latestStatus.updated_at).toLocaleString('zh-CN', { hour12: false, timeZone: 'Asia/Shanghai' })
         : '暂无',
       my_active_reservation: myReservationResult.data[0] || null
     }
   }
 }
+
+

@@ -7,9 +7,6 @@ const db = cloud.database()
 const _ = db.command
 const { TOKEN_SECRET } = require('./config')
 
-const RESERVATION_WINDOW_MS = 30 * 60 * 1000
-const DEFAULT_RESERVED_TOTAL_SLOTS = 5
-
 function decodeToken(token) {
   const parts = String(token || '').split('.')
   if (parts.length !== 2) return null
@@ -53,50 +50,25 @@ exports.main = async (event) => {
   const now = Date.now()
   await expireReservations(now)
 
-  const userActiveReservation = await db.collection('reservations').where({
+  const reservationResult = await db.collection('reservations').where({
     user_id: user._id,
     status: 'active',
     expire_at: _.gt(now)
-  }).limit(1).get()
+  }).orderBy('reserved_at', 'asc').limit(1).get()
 
-  if (userActiveReservation.data.length > 0) {
-    return { ok: false, message: '你已经有一条有效预约' }
+  if (reservationResult.data.length === 0) {
+    return { ok: false, message: '当前没有可取消的有效预约' }
   }
 
-  const statusResult = await db.collection('device_status').orderBy('updated_at', 'desc').limit(1).get()
-  const latestStatus = statusResult.data[0] || {}
-  const reservedTotalSlots = Number(latestStatus.reserved_total_slots || DEFAULT_RESERVED_TOTAL_SLOTS)
-  const reservedActiveCount = Number(latestStatus.reserved_active_count || 0)
-
-  const activeReservations = await db.collection('reservations').where({
-    status: 'active',
-    expire_at: _.gt(now)
-  }).get()
-
-  const reservableSlots = Math.max(0, reservedTotalSlots - reservedActiveCount - activeReservations.data.length)
-  if (reservableSlots <= 0) {
-    return { ok: false, message: '当前没有可预约车位' }
-  }
-
-  const expireAt = now + RESERVATION_WINDOW_MS
-  await db.collection('reservations').add({
+  const reservation = reservationResult.data[0]
+  await db.collection('reservations').doc(reservation._id).update({
     data: {
-      user_id: user._id,
-      plate_no: user.plate_no,
-      status: 'active',
-      reserved_at: now,
-      expire_at: expireAt,
-      cancelled_at: 0,
-      used_at: 0,
-      used_in_plate: '',
-      released_at: 0
+      status: 'cancelled',
+      cancelled_at: now,
+      released_at: now
     }
   })
 
-  return {
-    ok: true,
-    message: '预约成功',
-    expire_at: expireAt
-  }
+  return { ok: true, message: '已取消预约' }
 }
 

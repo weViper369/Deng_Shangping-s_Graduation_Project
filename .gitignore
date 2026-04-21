@@ -27,6 +27,8 @@ ESP8266/wechat-miniprogram/cloudfunctions/createReservation/config.js
 ESP8266/wechat-miniprogram/cloudfunctions/getParkingSummary/config.js
 ESP8266/wechat-miniprogram/cloudfunctions/getMyRecords/config.js
 ESP8266/wechat-miniprogram/cloudfunctions/deviceUpload/config.js
+ESP8266/wechat-miniprogram/cloudfunctions/cancelReservation/config.js
+ESP8266/wechat-miniprogram/cloudfunctions/getReservationSync/config.js
 
 # WeChat build / local cache
 ESP8266/wechat-miniprogram/dist/
